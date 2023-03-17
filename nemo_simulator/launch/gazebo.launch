@@ -15,7 +15,5 @@
 
     </include>
 
-
-    <node name='algo' pkg="nemo_simulator" type='algo.py'/>
     
 </launch>
