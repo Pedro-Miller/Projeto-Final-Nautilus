@@ -11,6 +11,11 @@
         <arg name="gui" value="$(arg gui)" />
         <arg name="verbose" value="true"/>
         <arg name="world_name" value="$(find nemo_simulator)/worlds/$(arg world).world"/>
+
+
     </include>
+
+
+    <node name='algo' pkg="nemo_simulator" type='algo.py'/>
     
 </launch>
