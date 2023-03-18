@@ -89,10 +89,10 @@ def main():
 
         # Set angular velocity in twist message
         if vel_ang is not None:
-            twist.angular.z = vel_ang
+            twist.angular.z = vel_ang * 4
 
         # Set linear velocity in twist message
-        twist.linear.y = 0.5
+        twist.linear.y = 2
 
         # Publish twist message
         pub.publish(twist)
