@@ -64,6 +64,33 @@ def orientar(state):
         return vel_ang
 
 
+def control_speed(state):
+    #importa variavel de estado do sonar
+    if 'sonar_data' in state:
+        sonar_data = state['sonar_data']
+        # extrai posição do sonar
+        x_m= sonar_data[0]
+        y_m= -sonar_data[1]
+
+        #calcula distancia
+        dist = math.sqrt(x_m**2 + y_m**2)
+
+        #define distancia min e max
+        min_dist = 2.0
+        max_dist = 5.0
+
+
+        speed_fator = (dist - min_dist) / (max_dist - min_dist)
+        speed_fator = min(1.0, max(0.0, speed_fator)) #map de 0 a 1
+
+
+        max_speed = 2.0
+        min_speed = 0.0
+
+        speed = (max_speed - min_speed) * speed_fator + min_speed
+
+        return speed
+
 def main():
     # Initialize node
     rospy.init_node("algo")
@@ -91,8 +118,14 @@ def main():
         if vel_ang is not None:
             twist.angular.z = vel_ang * 4
 
-        # Set linear velocity in twist message
-        twist.linear.y = 2
+        # Set linear velocity in twist message = 
+        speed = control_speed(state)
+        if speed is not None:
+            twist.linear.y = float(speed)
+        else:
+            twist.linear.y = 0.0
+
+        
 
         # Publish twist message
         pub.publish(twist)
