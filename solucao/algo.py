@@ -36,14 +36,14 @@ def orientar(state):
 
         # Extract sonar position data
         x_m= sonar_data[0]
-        y_m= sonar_data[1]
+        y_m= -sonar_data[1]
 
-
+        rospy.loginfo(str(x_m)+ " : " +str(y_m))
         # Calculate target angle using cross product of two vectors
-        target_angle = math.atan2(-y_m, -x_m)
+        target_angle = math.atan2(x_m, y_m)
         aerror = target_angle - yaw
 
-        rospy.loginfo('yaw:'+ str(yaw) +'tangl' + str(target_angle)+ ' tgangl: '+str(aerror) )
+        rospy.loginfo('yaw:'+ str(yaw) +'tangl: ' + str(target_angle)+ ' aer: '+str(aerror) )
 
 
 
