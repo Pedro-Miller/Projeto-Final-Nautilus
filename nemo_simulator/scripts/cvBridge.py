@@ -20,7 +20,7 @@ class CameraHandler:
         try:
             self.img = self.bridge.imgmsg_to_cv2(msg, "bgr8")
 
-        except CvBridgeError, e:
+        except CvBridgeError as e:
             print("Frame Dropped: ", e)
 
 
@@ -35,11 +35,11 @@ class CameraHandler:
 
 handler = CameraHandler()
 
-#EXAMPLE
-# while not rospy.is_shutdown():
-#     print(handler.fetchImg().shape)
-#     feed = handler.fetchImg()
+
+while not rospy.is_shutdown():
+     print(handler.fetchImg().shape)
+     feed = handler.fetchImg()
     
-#     cv2.imshow("feed", feed)
-#     cv2.waitKey()
+     cv2.imshow("feed", feed)
+     cv2.waitKey()
 
