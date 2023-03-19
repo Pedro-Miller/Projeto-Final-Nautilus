@@ -47,8 +47,14 @@ def image_callback(msg):
             cx = int(M["m10"] / M["m00"])
             cy = int(M["m01"] / M["m00"])
 
+            # Calcula as dimensões do contorno
+            x, y, w, h = cv2.boundingRect(c)
+
+            # Imprime as dimensões do contorno na tela
+            print("Dimensões do objeto verde: ({}, {})".format(w, h))
+
             # Imprime as coordenadas do centro na tela
-            print("Coordenadas do centro do objeto verde: ({}, {})".format(cx, cy))
+            # print("Coordenadas do centro do objeto verde: ({}, {})".format(cx, cy))
         
     except CvBridgeError as e:
         print("Frame Dropped: ", e)
