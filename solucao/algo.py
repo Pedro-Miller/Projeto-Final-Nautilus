@@ -4,9 +4,18 @@ import rospy
 import tf2_ros as tf
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist, Pose, Vector3, PointStamped
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge
+import cv2
+import numpy as np
 import math
 import tf.transformations as tft
 
+
+# Global variables for object detection
+green_detected = False
+red_detected = False
+red_direction = 0.0
 
 
 # Callback for sonar data
@@ -17,6 +26,52 @@ def sonar_callback(msg, state):
 # Callback for odometry data
 def odom_callback(msg, state):
     state['odom_data'] = msg.pose.pose
+
+
+# Callback for image data
+def image_callback(msg):
+    global green_detected
+    global red_detected
+    global red_direction
+
+    bridge = CvBridge()
+    cv_image = bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+
+    # Convert image to HSV
+    hsv = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
+
+    # Define color range for green
+    green_low = np.array([40, 50, 50])
+    green_high = np.array([80, 255, 255])
+
+    # Define color range for red
+    red_low1 = np.array([0, 70, 50])
+    red_high1 = np.array([10, 255, 255])
+    red_low2 = np.array([170, 70, 50])
+    red_high2 = np.array([180, 255, 255])
+
+    # Threshold the image for green and red colors
+    green_mask = cv2.inRange(hsv, green_low, green_high)
+    red_mask1 = cv2.inRange(hsv, red_low1, red_high1)
+    red_mask2 = cv2.inRange(hsv, red_low2, red_high2)
+    red_mask = cv2.bitwise_or(red_mask1, red_mask2)
+
+    # Find contours in the green and red masks
+    green_contours, _ = cv2.findContours(green_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    red_contours, _ = cv2.findContours(red_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+    # Reset detection flags
+    green_detected = False
+    red_detected = False
+    
+    # If a green object is detected, set green_detected flag
+    if len(green_contours) > 0:
+        green_detected = True
+
+    # If a red object is detected, and green is not, set red_detected flag
+    elif len(red_contours) > 0 and not len(green_contours) > 0:
+        red_detected = True
+
 
 
 # Function to calculate angular velocity required for orientation
@@ -91,6 +146,27 @@ def control_speed(state):
 
         return speed
 
+def andar(state, pub, rate):
+            twist = Twist()
+
+            # Calculate angular velocity for orientation
+            vel_ang = orientar(state)
+
+            # Set angular velocity in twist message
+            if vel_ang is not None:
+                twist.angular.z = vel_ang * 4
+
+            # Set linear velocity in twist message = 
+            speed = control_speed(state)
+            if speed is not None:
+                twist.linear.y = float(speed)
+            else:
+                twist.linear.y = 0.0
+                
+            # Publish twist message
+            pub.publish(twist)
+
+
 def main():
     # Initialize node
     rospy.init_node("algo")
@@ -101,6 +177,7 @@ def main():
     # Subscribe to sonar and odometry topics
     rospy.Subscriber("/sonar_data", PointStamped, sonar_callback, state)
     rospy.Subscriber("/odom", Odometry, odom_callback, state)
+    rospy.Subscriber("/camera/image_raw", Image, image_callback)
 
     # Setup publisher for velocity commands
     pub = rospy.Publisher("/cmd_vel", Twist, queue_size=10)
@@ -109,28 +186,13 @@ def main():
 
     # Main loop
     while not rospy.is_shutdown():
-        twist = Twist()
-
-        # Calculate angular velocity for orientation
-        vel_ang = orientar(state)
-
-        # Set angular velocity in twist message
-        if vel_ang is not None:
-            twist.angular.z = vel_ang * 4
-
-        # Set linear velocity in twist message = 
-        speed = control_speed(state)
-        if speed is not None:
-            twist.linear.y = float(speed)
-        else:
-            twist.linear.y = 0.0
-
-        
-
-        # Publish twist message
-        pub.publish(twist)
-
-        rate.sleep()
+       if green_detected == True:
+           andar(state, pub, rate)
+       elif red_detected == True:
+           #desviar
+           pass
+       elif red_detected == False and green_detected == False:
+           andar(state, pub, rate)        
 
 
 if __name__ == "__main__":

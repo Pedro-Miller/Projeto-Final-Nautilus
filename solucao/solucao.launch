@@ -1,4 +1,10 @@
 <?xml version="1.0"?>
 <launch>
+
+    <include file="$(find nemo_simulator)/launch/gazebo.launch" />
+
+
     <node name='algo' pkg="solucao" type='algo.py'/>
+    <node name='image_subscriber' pkg="solucao" type='camera_prototipo.py'/>
+
 </launch>
