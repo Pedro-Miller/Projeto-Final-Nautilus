@@ -63,20 +63,14 @@ def image_callback(msg):
     # Reset detection flags
     green_detected = False
     red_detected = False
-    id_detect = []
+    
     # If a green object is detected, set green_detected flag
     if len(green_contours) > 0:
         green_detected = True
-        id_detect[0] = red_detected
-        id_detect[1] = green_detected
-        return id_detect
 
     # If a red object is detected, and green is not, set red_detected flag
     elif len(red_contours) > 0 and not len(green_contours) > 0:
         red_detected = True
-        id_detect[0] = red_detected
-        id_detect[1] = green_detected
-        return id_detect
 
 
 
@@ -172,7 +166,6 @@ def andar(state, pub, rate):
             # Publish twist message
             pub.publish(twist)
 
-            rate.sleep()
 
 def main():
     # Initialize node
@@ -184,7 +177,7 @@ def main():
     # Subscribe to sonar and odometry topics
     rospy.Subscriber("/sonar_data", PointStamped, sonar_callback, state)
     rospy.Subscriber("/odom", Odometry, odom_callback, state)
-    rospy.Subscriber("/camera/image_raw", image_callback, Image)
+    rospy.Subscriber("/camera/image_raw", Image, image_callback)
 
     # Setup publisher for velocity commands
     pub = rospy.Publisher("/cmd_vel", Twist, queue_size=10)
@@ -193,8 +186,13 @@ def main():
 
     # Main loop
     while not rospy.is_shutdown():
-       andar(state, pub, rate)
-        
+       if green_detected == True:
+           andar(state, pub, rate)
+       elif red_detected == True:
+           #desviar
+           pass
+       elif red_detected == False and green_detected == False:
+           andar(state, pub, rate)        
 
 
 if __name__ == "__main__":
